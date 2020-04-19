@@ -5,7 +5,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 /**
  *
- * @author jianghaonan
+ * @author jianghaonan1
  */
 @SpringBootApplication
 public class MypuzzleApplication {
