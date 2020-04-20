@@ -1,8 +1,11 @@
 package com.jhn.mypuzzle;
 
+import com.google.common.base.*;
+import com.google.common.collect.HashMultiset;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
+import java.util.Set;
 
 
 class MyPuzzleApplicationTests {
@@ -73,4 +76,38 @@ class MyPuzzleApplicationTests {
         return list;
     }
 
+    @Test
+    void testGuava(){
+        //Optional 同jdk
+        Optional<Integer> possible = Optional.of(5);
+        System.out.println(possible.isPresent());
+        System.out.println(possible.get());
+        //Preconditions 参数校验
+        Preconditions.checkArgument(1==1);
+        Objects.equal(null,1);
+        Objects.hashCode(new Integer(1));
+        //新集合
+        HashMultiset<Integer> multiset = HashMultiset.create();
+        multiset.add(1);
+        multiset.add(1);
+        multiset.add(2);
+        multiset.add(3);
+        Set<Integer> integers = multiset.elementSet();
+        for (Integer integer : integers) {
+            System.out.println(integer);
+        }
+        System.out.println(multiset.count(1));
+
+        //连接器、分割器
+        Joiner joiner = Joiner.on("; ").skipNulls();
+        System.out.println(joiner.join("Harry", null, "Ron", "Hermione"));
+        System.out.println(Splitter.on(',')
+                .trimResults()
+                .omitEmptyStrings()
+                .split("foo,bar,,   qux,"));
+
+        System.out.println(MoreObjects.toStringHelper(this)
+                .add("x", 1)
+                .toString());
+    }
 }
