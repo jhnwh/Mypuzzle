@@ -1,11 +1,19 @@
 package com.jhn.mypuzzle;
 
 import com.google.common.base.*;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.google.common.collect.HashMultiset;
+import org.apache.activemq.ActiveMQConnectionFactory;
 import org.junit.jupiter.api.Test;
 
+import javax.jms.*;
 import java.util.Arrays;
 import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 
 class MyPuzzleApplicationTests {
@@ -109,5 +117,74 @@ class MyPuzzleApplicationTests {
         System.out.println(MoreObjects.toStringHelper(this)
                 .add("x", 1)
                 .toString());
+    }
+
+    @Test
+    void testGuavaCache(){
+        LoadingCache<String, String> ID = CacheBuilder.newBuilder()
+                .maximumSize(1000)
+                .expireAfterWrite(10, TimeUnit.MINUTES)
+                .build(
+                        new CacheLoader<String, String>() {
+                            @Override
+                            public String load(String key) {
+                                return createExpensiveString(key);
+                            }
+
+                            private String createExpensiveString(String key) {
+                                return UUID.randomUUID().toString() + "-" + key;
+                            }
+                        });
+        try {
+            ID.get("1");
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Test
+    void testActiveMqSendMessage() throws JMSException {
+        ActiveMQConnectionFactory activeMQConnectionFactory = new ActiveMQConnectionFactory(ActiveMQConnectionFactory.DEFAULT_USER,
+                ActiveMQConnectionFactory.DEFAULT_PASSWORD,
+                "tcp://localhost:61616");
+        Connection connection = activeMQConnectionFactory.createConnection();
+        connection.start();
+        Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+        Queue testQueue = session.createQueue("testQueue");
+        MessageProducer producer = session.createProducer(testQueue);
+        TextMessage textMessage = session.createTextMessage("test");
+        producer.send(textMessage);
+        connection.close();
+
+    }
+
+    @Test
+    void testActiveMqGetMessage() {
+        ActiveMQConnectionFactory activeMQConnectionFactory = new ActiveMQConnectionFactory(ActiveMQConnectionFactory.DEFAULT_USER,
+                ActiveMQConnectionFactory.DEFAULT_PASSWORD,
+                "tcp://localhost:61616");
+        Connection connection = null;
+        Session session = null;
+        try {
+            connection = activeMQConnectionFactory.createConnection();
+            connection.start();
+            session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+            Queue testQueue = session.createQueue("testQueue");
+            MessageConsumer consumer = session.createConsumer(testQueue);
+            while (true){
+                TextMessage message = (TextMessage) consumer.receive();
+                System.out.println("message:" + message.getText());
+            }
+        } catch (JMSException e) {
+            e.printStackTrace();
+        }finally {
+            try {
+                if (session != null) {
+                    session.close();
+                }
+            } catch (JMSException e) {
+                e.printStackTrace();
+            }
+        }
     }
 }
