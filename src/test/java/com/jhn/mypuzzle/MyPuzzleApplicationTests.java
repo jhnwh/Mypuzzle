@@ -9,6 +9,12 @@ import org.apache.activemq.ActiveMQConnectionFactory;
 import org.junit.jupiter.api.Test;
 
 import javax.jms.*;
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Set;
 import java.util.UUID;
@@ -171,10 +177,17 @@ class MyPuzzleApplicationTests {
             session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
             Queue testQueue = session.createQueue("testQueue");
             MessageConsumer consumer = session.createConsumer(testQueue);
-            while (true){
+            /*while (true){
                 TextMessage message = (TextMessage) consumer.receive();
                 System.out.println("message:" + message.getText());
-            }
+            }*/
+            consumer.setMessageListener(message -> {
+                try {
+                    ((TextMessage)message).getText();
+                } catch (JMSException e) {
+                    e.printStackTrace();
+                }
+            });
         } catch (JMSException e) {
             e.printStackTrace();
         }finally {
@@ -186,5 +199,22 @@ class MyPuzzleApplicationTests {
                 e.printStackTrace();
             }
         }
+    }
+
+    @Test
+    void testLocalDateTime(){
+        LocalDate now = LocalDate.now();
+        System.out.println(now.format(DateTimeFormatter.ISO_LOCAL_DATE));
+        LocalTime now1 = LocalTime.now();
+        System.out.println(now1);
+        System.out.println(LocalDateTime.now());
+        Instant instant = Instant.now();
+        System.out.println(instant.getEpochSecond());
+        System.out.println(instant.toEpochMilli());
+        System.out.println(instant.getNano());
+        Timestamp ts = Timestamp.valueOf(LocalDateTime.now());
+        System.out.println(ts.toString());
+        ts = Timestamp.from(Instant.now());
+        System.out.println(ts);
     }
 }
